@@ -12,7 +12,7 @@
 
 1. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/твой-юзернейм/barber-bot.git
+   git clone https://github.com/funnyvoidd/barber-bot.git
    cd barber-bot
    ```
    
@@ -23,7 +23,7 @@ source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Создайте файл ```.env``` по примеру ```.env.example```:
+3. Создайте файл ```.env```:
 * BOT_TOKEN — получите у @BotFather
 * ADMIN_ID — ваш Telegram ID (можно узнать у @userinfobot)
 
