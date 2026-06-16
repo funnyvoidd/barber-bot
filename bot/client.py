@@ -1,12 +1,11 @@
+from aiogram.fsm.context import FSMContext
+from bot.states import BookingState
 from aiogram import Router, F, types
 from aiogram.filters import Command
 from keyboards import main_menu, services_menu, masters_menu, date_menu, time_menu
 from db import add_appointment
 
 router = Router()
-
-# Временное хранилище выбора пользователя (в оперативной памяти)
-user_data = {}
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -18,33 +17,94 @@ async def cmd_start(message: types.Message):
     )
 
 @router.message(F.text == "📅 Записаться")
-async def choose_service(message: types.Message):
-    user_data[message.from_user.id] = {}
-    await message.answer("Выберите услугу:", reply_markup=services_menu())
+async def choose_service(message: types.Message, state: FSMContext):
+    await state.clear()
 
-@router.message(F.text.in_({"💈 Стрижка машинкой", "✂️ Стрижка ножницами", "🧔 Стрижка + борода"}))
-async def choose_master(message: types.Message):
-    user_data[message.from_user.id]["service"] = message.text
-    await message.answer("Выберите мастера:", reply_markup=masters_menu())
+    await message.answer(
+        "Выберите услугу:",
+        reply_markup=services_menu()
+    )
 
-@router.message(F.text.in_({"Алексей", "Дмитрий", "Артём"}))
-async def choose_date(message: types.Message):
-    user_data[message.from_user.id]["master"] = message.text
-    await message.answer("Выберите дату:", reply_markup=date_menu())
+    await state.set_state(BookingState.choosing_service)
 
-@router.message(F.text.in_({"Сегодня", "Завтра"}))
-async def choose_time(message: types.Message):
+@router.message(
+    BookingState.choosing_service,
+    F.text.in_(
+        {
+            "💈 Стрижка машинкой",
+            "✂️ Стрижка ножницами",
+            "🧔 Стрижка + борода"
+        }
+    )
+)
+async def choose_master(
+    message: types.Message,
+    state: FSMContext
+):
+    await state.update_data(service=message.text)
+
+    await message.answer(
+        "Выберите мастера:",
+        reply_markup=masters_menu()
+    )
+
+    await state.set_state(
+        BookingState.choosing_master
+    )
+
+@router.message(
+    BookingState.choosing_master,
+    F.text.in_({"Алексей", "Дмитрий", "Артём"})
+)
+async def choose_date(
+    message: types.Message,
+    state: FSMContext
+):
+    await state.update_data(master=message.text)
+
+    await message.answer(
+        "Выберите дату:",
+        reply_markup=date_menu()
+    )
+
+    await state.set_state(
+        BookingState.choosing_date
+    )
+
+@router.message(
+    BookingState.choosing_date,
+    F.text.in_({"Сегодня", "Завтра"})
+)
+async def choose_time(
+    message: types.Message,
+    state: FSMContext
+):
     from datetime import date, timedelta
+
     if message.text == "Сегодня":
         d = date.today().isoformat()
     else:
-        d = (date.today() + timedelta(days=1)).isoformat()
-    user_data[message.from_user.id]["date"] = d
-    await message.answer("Выберите время:", reply_markup=time_menu())
+        d = (
+            date.today() + timedelta(days=1)
+        ).isoformat()
+
+    await state.update_data(date=d)
+
+    await message.answer(
+        "Выберите время:",
+        reply_markup=time_menu()
+    )
+
+    await state.set_state(
+        BookingState.choosing_time
+    )
 
 @router.message(F.text.in_({"10:00", "12:00", "14:00", "16:00", "18:00"}))
-async def confirm_booking(message: types.Message):
-    data = user_data.get(message.from_user.id, {})
+async def confirm_booking(
+    message: types.Message,
+    state: FSMContext
+):
+    data = await state.get_data()
     data["time"] = message.text
     data["user_id"] = message.from_user.id
     data["username"] = message.from_user.username or message.from_user.full_name
@@ -81,7 +141,7 @@ async def confirm_booking(message: types.Message):
         f"Время: {data['time']}"
     )
 
-    user_data.pop(message.from_user.id, None)
+    await state.clear()
 
 @router.message(F.text == "🔙 Назад")
 async def go_back(message: types.Message):
