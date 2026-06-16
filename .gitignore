@@ -3,3 +3,5 @@ venv/
 .env
 *.db
 *.pyc
+.idea/
+.env.example
