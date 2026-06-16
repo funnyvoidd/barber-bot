@@ -70,7 +70,7 @@ async def confirm_booking(message: types.Message):
     )
 
     # Уведомление администратору
-    from config import ADMIN_ID
+    from config.settings import ADMIN_ID
     await message.bot.send_message(
         ADMIN_ID,
         f"🔔 Новая запись!\n\n"

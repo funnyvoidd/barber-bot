@@ -1,6 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
-from config import ADMIN_ID
+from config.settings import ADMIN_ID
 from db import get_today_appointments
 
 router = Router()

@@ -29,5 +29,5 @@ pip install -r requirements.txt
 
 4. Запустите бота:
 ```bash
-python bot.py
+python main.py
 ```

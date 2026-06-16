@@ -1,9 +1,9 @@
 import asyncio
 from aiogram import Bot, Dispatcher
-from config import BOT_TOKEN
+from config.settings import BOT_TOKEN
 from db import init_db
-from handlers.client import router as client_router
-from handlers.admin import router as admin_router
+from bot.client import router as client_router
+from bot.admin import router as admin_router
 
 async def main():
     await init_db()
