@@ -93,4 +93,4 @@ async def about(message: types.Message):
 
 @router.message(F.text == "📍 Контакты")
 async def contacts(message: types.Message):
-    await message.answer("📍 Белград, ул. Кнез Михаилова 12\n📞 +381 11 123 45 67")
+    await message.answer("📍 Белград, ул. Кнез Михаилова 52\n📞 +381 11 123 45 67")
