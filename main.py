@@ -3,7 +3,7 @@ from aiogram import Bot, Dispatcher
 from config.settings import BOT_TOKEN
 from db import init_db
 from bot.client import router as client_router
-from bot.admin import router as admin_router
+from bot.admin.router import admin_router
 
 async def main():
     await init_db()
