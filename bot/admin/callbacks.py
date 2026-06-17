@@ -6,4 +6,4 @@ router = Router()
 
 @router.callback_query()
 async def fallback(callback: CallbackQuery):
-    await callback.answer("⚠️ Неизвестное действие", show_alert=True)
+    await callback.answer("⚠️ Действие не найдено", show_alert=True)

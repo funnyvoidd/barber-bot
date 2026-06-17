@@ -6,3 +6,4 @@ class BookingState(StatesGroup):
     choosing_master = State()
     choosing_date = State()
     choosing_time = State()
+    confirm = State()
