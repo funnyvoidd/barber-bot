@@ -2,8 +2,9 @@ from aiogram.fsm.context import FSMContext
 from bot.states import BookingState
 from aiogram import Router, F, types
 from aiogram.filters import Command
-from keyboards import main_menu, services_menu, masters_menu, date_menu, time_menu
-from db import add_appointment
+from aiogram.types import CallbackQuery
+from keyboards import main_menu, services_menu, masters_menu, date_menu, time_menu, cancel_appointments_keyboard
+from db import add_appointment, is_slot_busy, get_user_appointments, delete_user_appointment
 
 router = Router()
 
@@ -109,6 +110,18 @@ async def confirm_booking(
     data["user_id"] = message.from_user.id
     data["username"] = message.from_user.username or message.from_user.full_name
 
+    busy = await is_slot_busy(
+        data["master"],
+        data["date"],
+        data["time"]
+    )
+
+    if busy:
+        await message.answer(
+            "⛔ Это время уже занято.\nВыберите другое."
+        )
+
+        return
     # Асинхронная запись в БД
     await add_appointment(
         user_id=data["user_id"],
@@ -146,6 +159,72 @@ async def confirm_booking(
 @router.message(F.text == "🔙 Назад")
 async def go_back(message: types.Message):
     await message.answer("Главное меню:", reply_markup=main_menu())
+
+@router.message(F.text == "📋 Мои записи")
+async def my_bookings(message: types.Message):
+
+    appointments = await get_user_appointments(
+        message.from_user.id
+    )
+
+    if not appointments:
+        await message.answer(
+            "У вас нет активных записей."
+        )
+        return
+
+    text = "📋 Ваши записи:\n\n"
+
+    for a in appointments:
+        text += (
+            f"#{a[0]}\n"
+            f"{a[3]}\n"
+            f"Мастер: {a[4]}\n"
+            f"{a[5]} {a[6]}\n\n"
+        )
+
+    await message.answer(text)
+
+@router.message(F.text == "❌ Отменить запись")
+async def cancel_menu(message: types.Message):
+
+    appointments = await get_user_appointments(
+        message.from_user.id
+    )
+
+    if not appointments:
+        await message.answer(
+            "У вас нет записей."
+        )
+        return
+
+    await message.answer(
+        "Выберите запись для отмены:",
+        reply_markup=cancel_appointments_keyboard(
+            appointments
+        )
+    )
+
+@router.callback_query(
+    F.data.startswith("cancel_")
+)
+async def cancel_appointment_callback(
+    callback: CallbackQuery
+):
+    appointment_id = int(
+        callback.data.split("_")[1]
+    )
+
+    await delete_user_appointment(
+        appointment_id,
+        callback.from_user.id
+    )
+
+    await callback.message.edit_text(
+        "✅ Запись отменена."
+    )
+
+    await callback.answer()
 
 @router.message(F.text == "ℹ️ О нас")
 async def about(message: types.Message):

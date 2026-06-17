@@ -1,13 +1,57 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+def admin_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(
+        text="📋 Сегодня",
+        callback_data="admin_today"
+    )
+
+    builder.button(
+        text="📅 Все записи",
+        callback_data="admin_all"
+    )
+
+    builder.button(
+        text="👨‍💼 Мастера",
+        callback_data="admin_masters"
+    )
+
+    builder.button(
+        text="📊 Статистика",
+        callback_data="admin_stats"
+    )
+
+    builder.adjust(1)
+
+    return builder.as_markup()
 
 def main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📅 Записаться")],
-            [KeyboardButton(text="ℹ️ О нас"), KeyboardButton(text="📍 Контакты")]
+            [KeyboardButton(text="📋 Мои записи")],
+            [KeyboardButton(text="❌ Отменить запись")],
+            [KeyboardButton(text="ℹ️ О нас")],
+            [KeyboardButton(text="📍 Контакты")]
         ],
         resize_keyboard=True
     )
+
+def cancel_appointments_keyboard(appointments):
+    builder = InlineKeyboardBuilder()
+
+    for appointment in appointments:
+        builder.button(
+            text=f"❌ {appointment[5]} {appointment[6]}",
+            callback_data=f"cancel_{appointment[0]}"
+        )
+
+    builder.adjust(1)
+
+    return builder.as_markup()
 
 def services_menu():
     return ReplyKeyboardMarkup(

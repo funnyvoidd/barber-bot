@@ -1,24 +1,71 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
+from aiogram.types import CallbackQuery
 from config.settings import ADMIN_ID
-from db import get_today_appointments
+from db import get_all_appointments, get_statistics
+from keyboards import admin_keyboard
 
 router = Router()
 
 @router.message(Command("admin"))
 async def admin_panel(message: types.Message):
+
     if message.from_user.id != ADMIN_ID:
         await message.answer("⛔ Доступ запрещён.")
         return
 
-    appointments = await get_today_appointments()
+    await message.answer(
+        "🔧 Панель администратора",
+        reply_markup=admin_keyboard()
+    )
+
+@router.callback_query(
+    F.data == "admin_all"
+)
+async def show_all(
+    callback: CallbackQuery
+):
+    appointments = await get_all_appointments()
+
     if not appointments:
-        await message.answer("На сегодня записей нет.")
+        await callback.message.answer(
+            "Записей нет."
+        )
         return
 
-    text = "📋 Записи на сегодня:\n\n"
-    for a in appointments:
-        # a = (id, user_id, username, service, master, date, time, created_at)
-        text += f"🕐 {a[6]} — {a[3]} (мастер {a[4]}, клиент @{a[2]})\n"
+    text = "📅 Все записи\n\n"
 
-    await message.answer(text)
+    for a in appointments:
+        text += (
+            f"#{a[0]}\n"
+            f"{a[5]} {a[6]}\n"
+            f"{a[3]}\n"
+            f"{a[4]}\n"
+            f"@{a[2]}\n\n"
+        )
+
+    await callback.message.answer(text)
+    await callback.answer()
+
+@router.callback_query(
+    F.data == "admin_stats"
+)
+async def show_stats(
+    callback: CallbackQuery
+):
+    total, master = await get_statistics()
+
+    text = (
+        f"📊 Статистика\n\n"
+        f"Всего записей: {total}\n"
+    )
+
+    if master:
+        text += (
+            f"Популярный мастер: "
+            f"{master[0]} ({master[1]})"
+        )
+
+    await callback.message.answer(text)
+
+    await callback.answer()
